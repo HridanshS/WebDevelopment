@@ -94,6 +94,7 @@ function initialiseSVG(){
         .call(d3.axisBottom(xScale))
         .selectAll("text");
 
+        //No. of Occurrences of Country in Dataset
     // Add y-axis
     chart.append("g")
         .attr("class", "y-axis")
@@ -108,8 +109,28 @@ function initialiseSVG(){
         .attr("text-anchor", "middle")
         .style("font-size", "18px")
         .style("fill", "white")
-        .text("");
+        .text("Various AQI Values by No. of Occurences of Country in Dataset");
+    
+    svg.append("text")
+        .attr("id", "y-axis-title")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -(height/2)+10)//width / 2)
+        .attr("y", 35)
+        .attr("text-anchor", "middle")
+        .style("font-size", "18px")
+        .style("fill", "white")
+        .text("No. of Occurences of Country in Dataset");
+
+    svg.append("text")
+        .attr("id", "x-axis-title")
+        .attr("x", width / 2)
+        .attr("y", 370)
+        .attr("text-anchor", "middle")
+        .style("font-size", "18px")
+        .style("fill", "white")
+        .text("Average Value");
 }
+
 
 function drawAirColours() {
     //updateBarChart(AirData, "Various AQI Values by No. of Cities in Country");
