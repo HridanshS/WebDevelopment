@@ -62,7 +62,22 @@ async function loadData() {
     });
 }
 
-
+function findMax(arg1, arg2, arg3) {
+    // console.log(arg1);
+    // console.log(arg2);
+    // console.log(arg3);
+    /*if (arg1 >= arg2) {
+        if (arg1 >= arg3) {
+            console.log(arg1);
+            return arg1;
+        }
+    } else if (arg1 >= arg3) {
+        console.log(arg2);
+        return arg2;
+    } else return arg3;*/
+    //console.log(Math.max(arg1, arg2, arg3));
+    return Math.max(arg1, arg2, arg3);
+}
 
 function initialiseSVG(){
     svg.attr("width",width);
@@ -77,16 +92,42 @@ function initialiseSVG(){
     chart = svg.append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    xScale = d3.scaleBand()
-        .domain([])
-        .range([0, chartWidth])
-        .padding(0.1);
+    var xScale = d3.scaleLinear()
+    .domain([0, d3.max(AirData, d => d.AQI_Value)])//findMax(d3.max(AirData, d => d.Ozone_AQI_Value), d3.max(AirData, d => d.AQI_Value), d3.max(AirData, d => d.PM2_5_AQI_Value))])//[0,200])//[d3.min(AirData, d => d.AQI_Value), d3.max(AirData, d => d.Ozone_AQI_Value)])
+    .range([0, width-80]);
 
-    yScale = d3.scaleLinear()
-        .domain([])
-        .nice()
-        .range([chartHeight, 0]);
+    //console.log(d3.max(AirData, d => d.Num_Occurrences));
+    var yScale = d3.scaleLinear()
+    .domain([0, 2872])//d3.max(AirData, d => d.Num_Occurrences)]) //2872 is Num_Occurrences for USA
+    .range([height-80, 0]);
 
+    const symbolType = {
+        AQI_Value: d3.symbolSquare,
+        Ozone_AQI_Value: d3.symbolTriangle,
+        PM2_5_AQI_Value: d3.symbolCircle
+    };
+
+    /*svg.selectAll("path")
+    .data(AirData)
+    .enter()
+    .append("path")
+    .attr("transform", d => `translate(${xScale(d.AQI_Value)}, ${yScale(d.Num_Occurrences)})`)
+    .attr("d", d => symbolType[d.SymbolType])
+    .attr("fill", d => d.Color)
+    .attr("stroke", "black")
+    .attr("stroke-width", 1);*/
+
+    svg.append('g')
+        .selectAll("dot")
+        .data(AirData)
+        .enter()
+        .append("circle")
+        .attr("cy", function (d) { return yScale(d["Num_Occurrences"]); } )
+        .attr("cx", function (d) { return xScale(d["AQI_Value"]); } )
+        .attr("r", 2)
+        .attr("transform", "translate(" + -10 + "," + 30 + ")")
+        .style("fill", "#CC0000");
+        
     // Add x-axis
     chart.append("g")
         .attr("class", "x-axis")
@@ -108,34 +149,34 @@ function initialiseSVG(){
         .attr("y", 20)
         .attr("text-anchor", "middle")
         .style("font-size", "18px")
-        .style("fill", "white")
-        .text("Various AQI Values by No. of Occurences of Country in Dataset");
+        .style("fill", "black")
+        .text("Various AQI Values by No. of Occurrences of Country in Dataset");
     
     svg.append("text")
         .attr("id", "y-axis-title")
         .attr("transform", "rotate(-90)")
         .attr("x", -(height/2)+10)//width / 2)
-        .attr("y", 35)
+        .attr("y", 20)
         .attr("text-anchor", "middle")
         .style("font-size", "18px")
-        .style("fill", "white")
-        .text("No. of Occurences of Country in Dataset");
+        .style("fill", "black")
+        .text("No. of Occurrences of Country in Dataset");
 
     svg.append("text")
         .attr("id", "x-axis-title")
         .attr("x", width / 2)
-        .attr("y", 370)
+        .attr("y", 385)
         .attr("text-anchor", "middle")
         .style("font-size", "18px")
-        .style("fill", "white")
+        .style("fill", "black")
         .text("Average Value");
 }
 
 
 function drawAirColours() {
-    //updateBarChart(AirData, "Various AQI Values by No. of Cities in Country");
     return 0;
 }
+
 
 
 /*function drawBarChart(data, title) {
@@ -328,7 +369,7 @@ function scrollLeftColumnToActiveVerse(id) {
 async function initialise() {
 // Now that we are calling an asynchronous function in our initialise function this function also now becomes async
     await loadData();
-    
+        //drawAirColours();
         initialiseSVG();
     drawKeyframe(keyframeIndex);
 
