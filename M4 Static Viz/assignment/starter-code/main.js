@@ -56,10 +56,12 @@ let AirData;
 
 async function loadData() {
     
-    await d3.csv("../../data/Hridansh_modified_global air pollution dataset.csv").then(data => {
+    await d3.csv("../../data/pivoted_air_pollution_data.csv").then(data => { //the original dataset was pivoted to generate this dataset. It is a summarized version where each row represents one country
         AirData = data;
+        //console.log(AirData);
     });
 }
+
 
 
 function initialiseSVG(){
@@ -110,11 +112,12 @@ function initialiseSVG(){
 }
 
 function drawAirColours() {
-    updateBarChart(AirData, "Various AQI Values by No. of Cities in Country");
+    //updateBarChart(AirData, "Various AQI Values by No. of Cities in Country");
+    return 0;
 }
 
 
-function drawBarChart(data, title) {
+/*function drawBarChart(data, title) {
     svg.selectAll("*").remove();
 
     // Define the margin so that there is space around the vis for axes and labels
@@ -138,15 +141,6 @@ function drawBarChart(data, title) {
         .range([chartHeight, 0]);
 
     // Create bars
-    chart.selectAll(".bar")
-        .data(data)
-        .enter().append("rect")
-        .attr("class", "bar")
-        .attr("x", d => xScale(d.colour)) // This arrow function notation is a more concise way of calling a function on each bar
-        .attr("y", d => yScale(d.count))
-        .attr("width", xScale.bandwidth())
-        .attr("height", d => chartHeight - yScale(d.count))
-        .attr("fill", "#FFDAB9"); // Set the bars to be a light grey colour
 
 
     // Add x-axis
@@ -170,84 +164,12 @@ function drawBarChart(data, title) {
         .style("font-size", "18px")
         .style("fill", "white")
         .text(title);
-}
-
-//animate piechart code included: pie chart segments altered, labels altered
-function drawPieChart(data, title) {
-    svg.selectAll("*").remove();
-
-    //Define the width and height of the pie chart
-    const chartWidth = width / 2;
-    const chartHeight = height / 2;
-
-    //Create a variable to hold the pie chart
-    const chart = svg.append("g")
-        .attr("transform", "translate(" + chartWidth + "," + chartHeight + ")");
-
-    //Define a color scale for the pie chart segments
-    const colorScale = d3.scaleOrdinal()
-        .range(["#B19CD9", "#77C3EC", "#E4A0F7", "white", "#F64A8A"]); 
-        // Purple, Blue, Lavender, White, Pink
-
-    //Define a pie layout and pass in the data
-    const pie = d3.pie()
-        .value(d => d.count);
-
-    //Create an arc generator
-    const arc = d3.arc()
-        .innerRadius(0)
-        .outerRadius(Math.min(chartWidth, chartHeight) / 1.2 - 10);
-
-    //Generate the pie chart segments
-    const arcs = chart.selectAll(".arc")
-        .data(pie(data))
-        .enter()
-        .append("g")
-        .attr("class", "arc");
-
-    //Create the pie chart segments
-    arcs.append("path")
-        .attr("d", arc)
-        .attr("fill", d => colorScale(d.data.colour)) //animation code is from here onwards till end of this append
-        .transition()
-        .duration(1000)
-        .attrTween("d", function(d) {
-            var interpolate = d3.interpolate({ startAngle: 0, endAngle: 0 }, d);
-            return function(t) {
-                return arc(interpolate(t));
-            };
-        });
-
-    //Add labels for each segment
-    arcs.append("text")
-        .attr("transform", d => {
-            const pos = arc.centroid(d);
-            pos[0] *= 1.5; 
-            pos[1] *= 1.5; 
-            return "translate(" + pos + ")";
-        })
-        .attr("dy", "0.35em")
-        .style("text-anchor", "middle")
-        .text(d => d.data.colour) //animation code is from here onwards till end of this append
-        .style("fill-opacity", 0)
-        .transition()
-        .duration(2500)
-        .style("fill-opacity", 1); //this line is for the text
-
-    //Add title
-    svg.append("text")
-        .attr("x", width / 2)
-        .attr("y", 20)
-        .attr("text-anchor", "middle")
-        .style("font-size", "18px")
-        .style("fill", "white")
-        .text(title);
-}
+}*/
 
 
 
 
-function updateBarChart(data, title = "") {
+/*function updateBarChart(data, title = "") {
     xScale.domain(data.map(d => d.colour));
     yScale.domain([0, d3.max(data, d => d.count)]).nice();
 
@@ -283,7 +205,7 @@ function updateBarChart(data, title = "") {
         svg.select("#chart-title")
             .text(title);
     }
-}
+}*/
 
 function forwardClicked() {
     // Make sure we don't let the keyframeIndex go out of range
@@ -298,7 +220,7 @@ function backwardClicked() {
     if (keyframeIndex == keyframes.length - 1) {
         svg.selectAll("*").remove();//
         initialiseSVG();
-        updateBarChart(AirData, "Distribution of Rose Colours");
+        //updateBarChart(AirData, "Distribution of Rose Colours");
       }
     if (keyframeIndex > 0) {
         keyframeIndex--;
