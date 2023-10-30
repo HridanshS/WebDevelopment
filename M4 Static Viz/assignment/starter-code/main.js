@@ -39,7 +39,7 @@ let xScale;
 let yScale;
 
 
-const width = 500;
+const width = 600;
 const height = 400;
 
 
@@ -59,6 +59,8 @@ async function loadData() {
     await d3.csv("../../data/pivoted_air_pollution_data.csv").then(data => { //the original dataset was pivoted to generate this dataset. It is a summarized version where each row represents one country
         AirData = data;
         //console.log(AirData);
+        //console.log(typeof(AirData[0].Num_Occurrences));
+        //console.log(typeof(parseInt(AirData[0].Num_Occurrences)));
     });
 }
 
@@ -93,12 +95,12 @@ function initialiseSVG(){
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     var xScale = d3.scaleLinear()
-    .domain([0, d3.max(AirData, d => d.AQI_Value)])//findMax(d3.max(AirData, d => d.Ozone_AQI_Value), d3.max(AirData, d => d.AQI_Value), d3.max(AirData, d => d.PM2_5_AQI_Value))])//[0,200])//[d3.min(AirData, d => d.AQI_Value), d3.max(AirData, d => d.Ozone_AQI_Value)])
+    .domain([0, d3.max(AirData, d => parseFloat(d.AQI_Value))])//findMax(d3.max(AirData, d => d.Ozone_AQI_Value), d3.max(AirData, d => d.AQI_Value), d3.max(AirData, d => d.PM2_5_AQI_Value))])//[0,200])//[d3.min(AirData, d => d.AQI_Value), d3.max(AirData, d => d.Ozone_AQI_Value)])
     .range([0, width-80]);
 
     //console.log(d3.max(AirData, d => d.Num_Occurrences));
     var yScale = d3.scaleLinear()
-    .domain([0, 2872])//d3.max(AirData, d => d.Num_Occurrences)]) //2872 is Num_Occurrences for USA
+    .domain([0, d3.max(AirData, d => parseInt(d.Num_Occurrences))]) //2872 is Num_Occurrences for USA //2872])
     .range([height-80, 0]);
 
     const symbolType = {
@@ -121,13 +123,50 @@ function initialiseSVG(){
         .selectAll("dot")
         .data(AirData)
         .enter()
-        .append("circle")
-        .attr("cy", function (d) { return yScale(d["Num_Occurrences"]); } )
-        .attr("cx", function (d) { return xScale(d["AQI_Value"]); } )
-        .attr("r", 2)
-        .attr("transform", "translate(" + -10 + "," + 30 + ")")
+        .append("rect")
+        .attr("y", function (d) { return yScale(d["Num_Occurrences"]); } ) //not sure why I had to go from cy -> y
+        .attr("x", function (d) { return xScale(d["AQI_Value"]); } ) //not sure why I had to go from cx -> x
+        //.attr("r", 2) //for circle
+        .attr("width", 4) 
+        .attr("height", 4) 
+        .attr("transform",  "translate(" + 50 + "," + 26 + ")")//"translate(" + -10 + "," + 30 + ")")
+        //how to automate this? Why put manual values
         .style("fill", "#CC0000");
         
+    svg.append('g')
+        .selectAll("dot")
+        .data(AirData)
+        .enter()
+        .append("polygon")
+        //.attr("cy", function (d) { return yScale(d["Num_Occurrences"]); } )
+        //.attr("cx", function (d) { return xScale(d["Ozone_AQI_Value"]); } ) 
+        .attr("points", "0,-4 2,4 -2,4") //coordinates for triangle
+        .attr("transform",  "translate(" + 50 + "," + 26 + ")")//"translate(" + -10 + "," + 30 + ")")
+        .attr("transform", function(d) {
+            const x = xScale(parseFloat(d["Ozone_AQI_Value"])) + 50;
+            const y = yScale(parseInt(d["Num_Occurrences"])) + 26;
+            return "translate(" + x + "," + y + ")";
+        })
+        //how to automate this? Why put manual values
+        .style("fill", "#000000")
+        //.attr("d", d => symbolType[d.SymbolType]);
+        //.append("d", d => symbolType[d.SymbolType]);
+
+    svg.append('g')
+        .selectAll("dot")
+        .data(AirData)
+        .enter()
+        .append("circle")
+        .attr("cy", function (d) { return yScale(d["Num_Occurrences"]); } )
+        .attr("cx", function (d) { return xScale(d["PM2_5_AQI_Value"]); } )
+        .attr("r", 2)
+        .attr("transform",  "translate(" + 50 + "," + 26 + ")")//"translate(" + -10 + "," + 30 + ")")
+        //how to automate this? Why put manual values
+        .style("fill", "#FFFFFF");
+
+
+    //shapes: AQI value (Square); Ozone AQI (Triangle); PM2.5 AQI (Circle)
+    
     // Add x-axis
     chart.append("g")
         .attr("class", "x-axis")
@@ -156,9 +195,9 @@ function initialiseSVG(){
         .attr("id", "y-axis-title")
         .attr("transform", "rotate(-90)")
         .attr("x", -(height/2)+10)//width / 2)
-        .attr("y", 20)
+        .attr("y", 14)
         .attr("text-anchor", "middle")
-        .style("font-size", "18px")
+        .style("font-size", "14px")
         .style("fill", "black")
         .text("No. of Occurrences of Country in Dataset");
 
@@ -167,7 +206,7 @@ function initialiseSVG(){
         .attr("x", width / 2)
         .attr("y", 385)
         .attr("text-anchor", "middle")
-        .style("font-size", "18px")
+        .style("font-size", "14px")
         .style("fill", "black")
         .text("Average Value");
 }
@@ -371,6 +410,8 @@ async function initialise() {
     await loadData();
         //drawAirColours();
         initialiseSVG();
+        /*Plot.dot(AirData, {x: "AQI_Value", y: "Num_Occurrences", fill: "Country", symbol: "Country"})
+        .plot({nice: true, grid: true, symbol: {legend: true}})*/
     drawKeyframe(keyframeIndex);
 
 }
