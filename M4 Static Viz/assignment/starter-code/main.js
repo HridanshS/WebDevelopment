@@ -73,6 +73,26 @@ async function loadData() {
         //set the min and max values
         slider.setAttribute("min", xMin);
         slider.setAttribute("max", xMax);
+
+        //how to make dynamic based on data?
+        //this is not working: Array.from(new Set(Graph1Data.map(d => d.Country)));
+        const countries = Array.from(new Set(Graph1Data.map(d => d.Country)));//["USA", "Canada", "UK", "Australia", "Germany", "France", "India"];
+
+        const countryDropdown = document.getElementById("countryDropdown");
+
+        // Populate the dropdown with options
+        countries.forEach((country) => {
+        const option = document.createElement("option");
+        option.value = country;
+        option.text = country;
+        countryDropdown.appendChild(option);
+        });
+
+        // Event listener to handle selections
+        countryDropdown.addEventListener("change", function () {
+        const selectedCountries = Array.from(countryDropdown.selectedOptions).map(option => option.value);
+        updateGraph1(selectedCountries);
+        });
     
     });
     await d3.csv("../../data/graph2_pivoted_air_pollution_data.csv").then(data => { //the original dataset was pivoted to generate this dataset. It is a summarized version where each row represents one country
@@ -341,11 +361,11 @@ function updateChart1(data, title = "") { //3 different columns shown on same gr
     //yScale.domain([0, d3.max(data, d => d.count)]).nice();
 
     var xScale = d3.scaleLinear()
-    .domain([0, d3.max(Graph1Data, d => parseFloat(d.AQI_Value))])//findMax(d3.max(Graph1Data, d => d.Ozone_AQI_Value), d3.max(Graph1Data, d => d.AQI_Value), d3.max(Graph1Data, d => d.PM2_5_AQI_Value))])//[0,200])//[d3.min(Graph1Data, d => d.AQI_Value), d3.max(Graph1Data, d => d.Ozone_AQI_Value)])
+    .domain([0, d3.max(data, d => parseFloat(d.AQI_Value))])//findMax(d3.max(data, d => d.Ozone_AQI_Value), d3.max(data, d => d.AQI_Value), d3.max(data, d => d.PM2_5_AQI_Value))])//[0,200])//[d3.min(data, d => d.AQI_Value), d3.max(data, d => d.Ozone_AQI_Value)])
     .range([0, width-80]);
 
     var yScale = d3.scaleLinear()
-    .domain([0, d3.max(Graph1Data, d => parseInt(d.Num_Occurrences))]) //2872 is Num_Occurrences for USA //2872])
+    .domain([0, d3.max(data, d => parseInt(d.Num_Occurrences))]) //2872 is Num_Occurrences for USA //2872])
     .range([height-80, 0]);
 
     const symbolType = {
@@ -367,7 +387,7 @@ function updateChart1(data, title = "") { //3 different columns shown on same gr
 
     svg.append('g')
         .selectAll("dot")
-        .data(Graph1Data)
+        .data(data)
         .enter()
         .append("rect")
         .attr("class", "data-point")
@@ -382,7 +402,7 @@ function updateChart1(data, title = "") { //3 different columns shown on same gr
 
     svg.append('g')
         .selectAll("dot")
-        .data(Graph1Data)
+        .data(data)
         .enter()
         .append("polygon")
         .attr("class", "data-point")
@@ -400,7 +420,7 @@ function updateChart1(data, title = "") { //3 different columns shown on same gr
 
     svg.append('g')
         .selectAll("dot")
-        .data(Graph1Data)
+        .data(data)
         .enter()
         .append("circle")
         .attr("class", "data-point")
@@ -494,32 +514,33 @@ function updateChart1WithFilter() { //function to update the chart with the sele
     updateChart1(filteredData, "Various AQI Values by No. of Occurrences of Country in Dataset");
 }
 
-//how to make dynamic based on data?
-//this is not working: Array.from(new Set(Graph1Data.map(d => d.Country)));
-const countries = ["USA", "Canada", "UK", "Australia", "Germany", "France", "India"];
-
-const countryDropdown = document.getElementById("countryDropdown");
-
-// Populate the dropdown with options
-countries.forEach((country) => {
-  const option = document.createElement("option");
-  option.value = country;
-  option.text = country;
-  countryDropdown.appendChild(option);
-});
-
-// Event listener to handle selections
-countryDropdown.addEventListener("change", function () {
-  const selectedCountries = Array.from(countryDropdown.selectedOptions).map(option => option.value);
-  updateGraph(selectedCountries);
-});
-
 // EDIT
-function updateGraph(selectedCountries) {
+function updateGraph1(selectedCountries) {
   //use selectedCountries array to filter your data and display the selected countries in the graph
 }
 
 
+const variables = ["AQI", "Ozone", "PM2.5", "NO2", "CO"];
+
+const variablesDropdown = document.getElementById("variableDropdown");
+
+// Populate the dropdown with options
+variables.forEach((variable) => {
+  const option = document.createElement("option");
+  option.value = variable;
+  option.text = variable;
+  variableDropdown.appendChild(option);
+});
+
+// Event listener to handle selections
+variableDropdown.addEventListener("change", function () {
+    const selectedVar = variableDropdown.value;
+  updateGraph2(selectedVar);
+});
+
+function updateGraph2(selectedVar) {
+    //use selectedCountries array to filter your data and display the selected countries in the graph
+}
 
 
 
@@ -527,11 +548,11 @@ function updateGraph(selectedCountries) {
 
 function updateChart2(data, title = "") { //3 different columns shown on same graph
     var xScale = d3.scaleLinear()
-    .domain([0, d3.max(AggFreqData, d => parseFloat(d.AQI_Value))])//findMax(d3.max(Graph1Data, d => d.Ozone_AQI_Value), d3.max(Graph1Data, d => d.AQI_Value), d3.max(Graph1Data, d => d.PM2_5_AQI_Value))])//[0,200])//[d3.min(Graph1Data, d => d.AQI_Value), d3.max(Graph1Data, d => d.Ozone_AQI_Value)])
+    .domain([0, d3.max(data, d => parseFloat(d.Value))])//findMax(d3.max(Graph1Data, d => d.Ozone_AQI_Value), d3.max(Graph1Data, d => d.AQI_Value), d3.max(Graph1Data, d => d.PM2_5_AQI_Value))])//[0,200])//[d3.min(Graph1Data, d => d.AQI_Value), d3.max(Graph1Data, d => d.Ozone_AQI_Value)])
     .range([0, width-80]);
 
     var yScale = d3.scaleLinear()
-    .domain([0, d3.max(AggFreqData, d => parseInt(d.Num_Occurrences))]) //2872 is Num_Occurrences for USA //2872])
+    .domain([0, d3.max(data, d => parseInt(d.NumOccurrences))]) //2872 is Num_Occurrences for USA //2872])
     .range([height-80, 0]);
 
     svg.selectAll(".data-point").remove();
@@ -541,14 +562,14 @@ function updateChart2(data, title = "") { //3 different columns shown on same gr
 
     // Create a line generator function
     var lineGenerator = d3.line()
-        .x(function (d) { return xScale(parseFloat(d.AQI_Value)); })
-        .y(function (d) { return yScale(parseInt(d.Num_Occurrences)); });
+        .x(function (d) { return xScale(parseFloat(d.Value)); })
+        .y(function (d) { return yScale(parseInt(d.NumOccurrences)); });
 
     
 
     // Create the line graph
     svg.append("path")
-        .datum(AggFreqData)
+        .datum(data)
         .attr("fill", "none")
         .attr("stroke", "#CC0000")
         .attr("stroke-width", 2)
