@@ -4,16 +4,17 @@ let keyframes = [
     {
         activeVerse: 1,
         activeLines: [1, 2, 3, 4],
-        svgUpdate: drawAirColours
+        svgUpdate: drawAQIValuesGraph1
     },
     {
         activeVerse: 2,
-        activeLines: [1, 2, 3, 4]
+        activeLines: [1, 2, 3, 4],
+        svgUpdate: drawAggFreqGraph2
     },
     {
         activeVerse: 3,
         activeLines: [1, 2, 3, 4],
-        svgUpdate: drawAirColours
+        svgUpdate: drawAQIValuesGraph1
     },
     {
         activeVerse: 4,
@@ -51,21 +52,27 @@ document.getElementById("backward-button").addEventListener("click", backwardCli
 
 
 
-let AirData;
+let Graph1Data;
+let AggFreqData; //Graph2
 
 async function loadData() {
     
     await d3.csv("../../data/pivoted_air_pollution_data.csv").then(data => { //the original dataset was pivoted to generate this dataset. It is a summarized version where each row represents one country
-        AirData = data;
-        //console.log(AirData);
-        //console.log(typeof(AirData[0].Num_Occurrences));
-        //console.log(typeof(parseInt(AirData[0].Num_Occurrences)));
+        Graph1Data = data;
+        //console.log(Graph1Data);
+        //console.log(typeof(Graph1Data[0].Num_Occurrences));
+        //console.log(typeof(parseInt(Graph1Data[0].Num_Occurrences)));
+    });
+
+    await d3.csv("../../data/graph2_pivoted_air_pollution_data.csv").then(data => { //the original dataset was pivoted to generate this dataset. It is a summarized version where each row represents one country
+        AggFreqData = data;
+        //console.log(AggFreqData);
     });
 }
 
 /* Implementing filters:
-1) Maintain two vars - AirData, FilteredData
-2) Function: When changes made to filter, FilteredData should be updated with AirData, and then FilteredData should be filtered based on range selected
+1) Maintain two vars - Graph1Data, FilteredData
+2) Function: When changes made to filter, FilteredData should be updated with Graph1Data, and then FilteredData should be filtered based on range selected
 3) then plot the FilteredData
 */
 
@@ -87,81 +94,16 @@ function initialiseSVG(){
     chart = svg.append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    var xScale = d3.scaleLinear()
-    .domain([0, d3.max(AirData, d => parseFloat(d.AQI_Value))])//findMax(d3.max(AirData, d => d.Ozone_AQI_Value), d3.max(AirData, d => d.AQI_Value), d3.max(AirData, d => d.PM2_5_AQI_Value))])//[0,200])//[d3.min(AirData, d => d.AQI_Value), d3.max(AirData, d => d.Ozone_AQI_Value)])
-    .range([0, width-80]);
-    //xScale different from original assignment
+        xScale = d3.scaleBand()
+        .domain([])
+        .range([0, chartWidth])
+        .padding(0.1);
 
-    //console.log(d3.max(AirData, d => d.Num_Occurrences));
-    var yScale = d3.scaleLinear()
-    .domain([0, d3.max(AirData, d => parseInt(d.Num_Occurrences))]) //2872 is Num_Occurrences for USA //2872])
-    .range([height-80, 0]);
-    //yScale different from original assignment
+    yScale = d3.scaleLinear()
+        .domain([])
+        .nice()
+        .range([chartHeight, 0]);
 
-    const symbolType = {
-        AQI_Value: d3.symbolSquare,
-        Ozone_AQI_Value: d3.symbolTriangle,
-        PM2_5_AQI_Value: d3.symbolCircle
-    };
-
-    /*svg.selectAll("path")
-    .data(AirData)
-    .enter()
-    .append("path")
-    .attr("transform", d => `translate(${xScale(d.AQI_Value)}, ${yScale(d.Num_Occurrences)})`)
-    .attr("d", d => symbolType[d.SymbolType])
-    .attr("fill", d => d.Color)
-    .attr("stroke", "black")
-    .attr("stroke-width", 1);*/
-
-    svg.append('g')
-        .selectAll("dot")
-        .data(AirData)
-        .enter()
-        .append("rect")
-        .attr("y", function (d) { return yScale(d["Num_Occurrences"]); } ) //not sure why I had to go from cy -> y
-        .attr("x", function (d) { return xScale(d["AQI_Value"]); } ) //not sure why I had to go from cx -> x
-        //.attr("r", 2) //for circle
-        .attr("width", 4) 
-        .attr("height", 4) 
-        .attr("transform",  "translate(" + 50 + "," + 26 + ")")//"translate(" + -10 + "," + 30 + ")")
-        //how to automate this? Why put manual values
-        .style("fill", "#CC0000");
-        
-    svg.append('g')
-        .selectAll("dot")
-        .data(AirData)
-        .enter()
-        .append("polygon")
-        //.attr("cy", function (d) { return yScale(d["Num_Occurrences"]); } )
-        //.attr("cx", function (d) { return xScale(d["Ozone_AQI_Value"]); } ) 
-        .attr("points", "0,-4 2,4 -2,4") //coordinates for triangle
-        .attr("transform",  "translate(" + 50 + "," + 26 + ")")//"translate(" + -10 + "," + 30 + ")")
-        .attr("transform", function(d) {
-            const x = xScale(parseFloat(d["Ozone_AQI_Value"])) + 50;
-            const y = yScale(parseInt(d["Num_Occurrences"])) + 26;
-            return "translate(" + x + "," + y + ")";
-        })
-        //how to automate this? Why put manual values
-        .style("fill", "#000000")
-        //.attr("d", d => symbolType[d.SymbolType]);
-        //.append("d", d => symbolType[d.SymbolType]);
-
-    svg.append('g')
-        .selectAll("dot")
-        .data(AirData)
-        .enter()
-        .append("circle")
-        .attr("cy", function (d) { return yScale(d["Num_Occurrences"]); } )
-        .attr("cx", function (d) { return xScale(d["PM2_5_AQI_Value"]); } )
-        .attr("r", 2)
-        .attr("transform",  "translate(" + 50 + "," + 26 + ")")//"translate(" + -10 + "," + 30 + ")")
-        //how to automate this? Why put manual values
-        .style("fill", "#FFFFFF");
-
-
-    //shapes: AQI value (Square); Ozone AQI (Triangle); PM2.5 AQI (Circle)
-    
     // Add x-axis
     chart.append("g")
         .attr("class", "x-axis")
@@ -169,7 +111,6 @@ function initialiseSVG(){
         .call(d3.axisBottom(xScale))
         .selectAll("text");
 
-        //No. of Occurrences of Country in Dataset
     // Add y-axis
     chart.append("g")
         .attr("class", "y-axis")
@@ -183,32 +124,17 @@ function initialiseSVG(){
         .attr("y", 20)
         .attr("text-anchor", "middle")
         .style("font-size", "18px")
-        .style("fill", "black")
-        .text("Various AQI Values by No. of Occurrences of Country in Dataset");
-    
-    svg.append("text")
-        .attr("id", "y-axis-title")
-        .attr("transform", "rotate(-90)")
-        .attr("x", -(height/2)+10)//width / 2)
-        .attr("y", 14)
-        .attr("text-anchor", "middle")
-        .style("font-size", "14px")
-        .style("fill", "black")
-        .text("No. of Occurrences of Country in Dataset");
-
-    svg.append("text")
-        .attr("id", "x-axis-title")
-        .attr("x", width / 2)
-        .attr("y", 385)
-        .attr("text-anchor", "middle")
-        .style("font-size", "14px")
-        .style("fill", "black")
-        .text("Average Value");
+        .style("fill", "white")
+        .text("");
 }
 
 
-function drawAirColours() {
-    return 0;
+function drawAQIValuesGraph1() {
+    updateChart1(Graph1Data, "Various AQI Values by No. of Occurrences of Country in Dataset");
+}
+
+function drawAggFreqGraph2() {
+    updateChart2(AggFreqData, "Aggregate Frequency of AQI Values in Cities");
 }
 
 
@@ -316,7 +242,7 @@ function backwardClicked() {
     if (keyframeIndex == keyframes.length - 1) {
         svg.selectAll("*").remove();//
         initialiseSVG();
-        //updateBarChart(AirData, "Distribution of Rose Colours");
+        //updateBarChart(Graph1Data, "Distribution of Rose Colours");
       }
     if (keyframeIndex > 0) {
         keyframeIndex--;
@@ -404,11 +330,11 @@ function updateChart1(data, title = "") { //3 different columns shown on same gr
     //yScale.domain([0, d3.max(data, d => d.count)]).nice();
 
     var xScale = d3.scaleLinear()
-    .domain([0, d3.max(AirData, d => parseFloat(d.AQI_Value))])//findMax(d3.max(AirData, d => d.Ozone_AQI_Value), d3.max(AirData, d => d.AQI_Value), d3.max(AirData, d => d.PM2_5_AQI_Value))])//[0,200])//[d3.min(AirData, d => d.AQI_Value), d3.max(AirData, d => d.Ozone_AQI_Value)])
+    .domain([0, d3.max(Graph1Data, d => parseFloat(d.AQI_Value))])//findMax(d3.max(Graph1Data, d => d.Ozone_AQI_Value), d3.max(Graph1Data, d => d.AQI_Value), d3.max(Graph1Data, d => d.PM2_5_AQI_Value))])//[0,200])//[d3.min(Graph1Data, d => d.AQI_Value), d3.max(Graph1Data, d => d.Ozone_AQI_Value)])
     .range([0, width-80]);
 
     var yScale = d3.scaleLinear()
-    .domain([0, d3.max(AirData, d => parseInt(d.Num_Occurrences))]) //2872 is Num_Occurrences for USA //2872])
+    .domain([0, d3.max(Graph1Data, d => parseInt(d.Num_Occurrences))]) //2872 is Num_Occurrences for USA //2872])
     .range([height-80, 0]);
 
     const symbolType = {
@@ -422,11 +348,19 @@ function updateChart1(data, title = "") { //3 different columns shown on same gr
     // const bars = chart.selectAll(".bar")
     //     .data(data, d => d.colour);
 
+    //NEED TO REMOVE ALL THE DATA THAT IS CURRENTLY ON THE GRAPH
+    svg.selectAll(".data-line").remove();
+    svg.select("#x-axis-title").remove();
+    svg.select("#y-axis-title").remove();
+    svg.select("#chart-title").remove();
+
+
     svg.append('g')
         .selectAll("dot")
-        .data(AirData)
+        .data(Graph1Data)
         .enter()
         .append("rect")
+        .attr("class", "data-point")
         .attr("y", function (d) { return yScale(d["Num_Occurrences"]); } ) //not sure why I had to go from cy -> y
         .attr("x", function (d) { return xScale(d["AQI_Value"]); } ) //not sure why I had to go from cx -> x
         //.attr("r", 2) //for circle
@@ -438,9 +372,10 @@ function updateChart1(data, title = "") { //3 different columns shown on same gr
 
     svg.append('g')
         .selectAll("dot")
-        .data(AirData)
+        .data(Graph1Data)
         .enter()
         .append("polygon")
+        .attr("class", "data-point")
         //.attr("cy", function (d) { return yScale(d["Num_Occurrences"]); } )
         //.attr("cx", function (d) { return xScale(d["Ozone_AQI_Value"]); } ) 
         .attr("points", "0,-4 2,4 -2,4") //coordinates for triangle
@@ -455,9 +390,10 @@ function updateChart1(data, title = "") { //3 different columns shown on same gr
 
     svg.append('g')
         .selectAll("dot")
-        .data(AirData)
+        .data(Graph1Data)
         .enter()
         .append("circle")
+        .attr("class", "data-point")
         .attr("cy", function (d) { return yScale(d["Num_Occurrences"]); } )
         .attr("cx", function (d) { return xScale(d["PM2_5_AQI_Value"]); } )
         .attr("r", 2)
@@ -522,12 +458,94 @@ function updateChart1(data, title = "") { //3 different columns shown on same gr
 }
 
 
+function updateChart2(data, title = "") { //3 different columns shown on same graph
+    var xScale = d3.scaleLinear()
+    .domain([0, d3.max(AggFreqData, d => parseFloat(d.AQI_Value))])//findMax(d3.max(Graph1Data, d => d.Ozone_AQI_Value), d3.max(Graph1Data, d => d.AQI_Value), d3.max(Graph1Data, d => d.PM2_5_AQI_Value))])//[0,200])//[d3.min(Graph1Data, d => d.AQI_Value), d3.max(Graph1Data, d => d.Ozone_AQI_Value)])
+    .range([0, width-80]);
+
+    var yScale = d3.scaleLinear()
+    .domain([0, d3.max(AggFreqData, d => parseInt(d.Num_Occurrences))]) //2872 is Num_Occurrences for USA //2872])
+    .range([height-80, 0]);
+
+    //NEED TO REMOVE ALL THE DATA THAT IS CURRENTLY ON THE GRAPH
+    //svg.selectAll("*").remove();
+    svg.selectAll(".data-point").remove();
+    svg.select("#x-axis-title").remove();
+    svg.select("#y-axis-title").remove();
+    svg.select("#chart-title").remove();
+
+    // Create a line generator function
+    var lineGenerator = d3.line()
+        .x(function (d) { return xScale(parseFloat(d.AQI_Value)); })
+        .y(function (d) { return yScale(parseInt(d.Num_Occurrences)); });
+
+    // Create the line graph
+    svg.append("path")
+        .datum(AggFreqData)
+        .attr("fill", "none")
+        .attr("stroke", "#CC0000")
+        .attr("stroke-width", 2)
+        .attr("d", lineGenerator);
+    
+    // Add x-axis
+    chart.append("g")
+        .attr("class", "x-axis")
+        .attr("transform", `translate(0,${chartHeight})`)
+        .call(d3.axisBottom(xScale))
+        .selectAll("text");
+
+    // Add y-axis
+    chart.append("g")
+        .attr("class", "y-axis")
+        .call(d3.axisLeft(yScale))
+        .selectAll("text");
+
+    // Add title
+    svg.append("text")
+        .attr("id", "chart-title")
+        .attr("x", width / 2)
+        .attr("y", 20)
+        .attr("text-anchor", "middle")
+        .style("font-size", "18px")
+        .style("fill", "black");
+    
+    svg.append("text")
+        .attr("id", "y-axis-title")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -(height/2)+10)//width / 2)
+        .attr("y", 14)
+        .attr("text-anchor", "middle")
+        .style("font-size", "14px")
+        .style("fill", "black")
+        .text("Occurrence Frequency");
+
+    svg.append("text")
+        .attr("id", "x-axis-title")
+        .attr("x", width / 2)
+        .attr("y", 385)
+        .attr("text-anchor", "middle")
+        .style("font-size", "14px")
+        .style("fill", "black")
+        .text("AQI Value");
+
+    /*chart.select(".x-axis")
+        .call(d3.axisBottom(xScale));
+
+    chart.select(".y-axis")
+        .call(d3.axisLeft(yScale));*/
+
+    if (title.length > 0) {
+        svg.select("#chart-title")
+            .text(title);
+    }
+}
+
 async function initialise() {
 // Now that we are calling an asynchronous function in our initialise function this function also now becomes async
     await loadData();
-        //drawAirColours();
+        //drawAQIValuesGraph1();
         initialiseSVG();
-        /*Plot.dot(AirData, {x: "AQI_Value", y: "Num_Occurrences", fill: "Country", symbol: "Country"})
+        /*Plot.dot(Graph1Data, {x: "AQI_Value", y: "Num_Occurrences", fill: "Country", symbol: "Country"})
         .plot({nice: true, grid: true, symbol: {legend: true}})*/
     drawKeyframe(keyframeIndex);
 
