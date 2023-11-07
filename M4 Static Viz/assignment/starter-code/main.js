@@ -53,7 +53,6 @@ document.getElementById("backward-button").addEventListener("click", backwardCli
 
 let AirData;
 
-
 async function loadData() {
     
     await d3.csv("../../data/pivoted_air_pollution_data.csv").then(data => { //the original dataset was pivoted to generate this dataset. It is a summarized version where each row represents one country
@@ -64,20 +63,14 @@ async function loadData() {
     });
 }
 
+/* Implementing filters:
+1) Maintain two vars - AirData, FilteredData
+2) Function: When changes made to filter, FilteredData should be updated with AirData, and then FilteredData should be filtered based on range selected
+3) then plot the FilteredData
+*/
+
+
 function findMax(arg1, arg2, arg3) {
-    // console.log(arg1);
-    // console.log(arg2);
-    // console.log(arg3);
-    /*if (arg1 >= arg2) {
-        if (arg1 >= arg3) {
-            console.log(arg1);
-            return arg1;
-        }
-    } else if (arg1 >= arg3) {
-        console.log(arg2);
-        return arg2;
-    } else return arg3;*/
-    //console.log(Math.max(arg1, arg2, arg3));
     return Math.max(arg1, arg2, arg3);
 }
 
@@ -97,11 +90,13 @@ function initialiseSVG(){
     var xScale = d3.scaleLinear()
     .domain([0, d3.max(AirData, d => parseFloat(d.AQI_Value))])//findMax(d3.max(AirData, d => d.Ozone_AQI_Value), d3.max(AirData, d => d.AQI_Value), d3.max(AirData, d => d.PM2_5_AQI_Value))])//[0,200])//[d3.min(AirData, d => d.AQI_Value), d3.max(AirData, d => d.Ozone_AQI_Value)])
     .range([0, width-80]);
+    //xScale different from original assignment
 
     //console.log(d3.max(AirData, d => d.Num_Occurrences));
     var yScale = d3.scaleLinear()
     .domain([0, d3.max(AirData, d => parseInt(d.Num_Occurrences))]) //2872 is Num_Occurrences for USA //2872])
     .range([height-80, 0]);
+    //yScale different from original assignment
 
     const symbolType = {
         AQI_Value: d3.symbolSquare,
@@ -402,6 +397,128 @@ function scrollLeftColumnToActiveVerse(id) {
         top: desiredScrollTop,
         behavior: 'smooth'
     })
+}
+
+function updateChart1(data, title = "") { //3 different columns shown on same graph
+    //xScale.domain(data.map(d => d.colour));
+    //yScale.domain([0, d3.max(data, d => d.count)]).nice();
+
+    var xScale = d3.scaleLinear()
+    .domain([0, d3.max(AirData, d => parseFloat(d.AQI_Value))])//findMax(d3.max(AirData, d => d.Ozone_AQI_Value), d3.max(AirData, d => d.AQI_Value), d3.max(AirData, d => d.PM2_5_AQI_Value))])//[0,200])//[d3.min(AirData, d => d.AQI_Value), d3.max(AirData, d => d.Ozone_AQI_Value)])
+    .range([0, width-80]);
+
+    var yScale = d3.scaleLinear()
+    .domain([0, d3.max(AirData, d => parseInt(d.Num_Occurrences))]) //2872 is Num_Occurrences for USA //2872])
+    .range([height-80, 0]);
+
+    const symbolType = {
+        AQI_Value: d3.symbolSquare,
+        Ozone_AQI_Value: d3.symbolTriangle,
+        PM2_5_AQI_Value: d3.symbolCircle
+    };
+
+
+
+    // const bars = chart.selectAll(".bar")
+    //     .data(data, d => d.colour);
+
+    svg.append('g')
+        .selectAll("dot")
+        .data(AirData)
+        .enter()
+        .append("rect")
+        .attr("y", function (d) { return yScale(d["Num_Occurrences"]); } ) //not sure why I had to go from cy -> y
+        .attr("x", function (d) { return xScale(d["AQI_Value"]); } ) //not sure why I had to go from cx -> x
+        //.attr("r", 2) //for circle
+        .attr("width", 4) 
+        .attr("height", 4) 
+        .attr("transform",  "translate(" + 50 + "," + 26 + ")")//"translate(" + -10 + "," + 30 + ")")
+        //how to automate this? Why put manual values
+        .style("fill", "#CC0000");
+
+    svg.append('g')
+        .selectAll("dot")
+        .data(AirData)
+        .enter()
+        .append("polygon")
+        //.attr("cy", function (d) { return yScale(d["Num_Occurrences"]); } )
+        //.attr("cx", function (d) { return xScale(d["Ozone_AQI_Value"]); } ) 
+        .attr("points", "0,-4 2,4 -2,4") //coordinates for triangle
+        .attr("transform",  "translate(" + 50 + "," + 26 + ")")//"translate(" + -10 + "," + 30 + ")")
+        .attr("transform", function(d) {
+            const x = xScale(parseFloat(d["Ozone_AQI_Value"])) + 50;
+            const y = yScale(parseInt(d["Num_Occurrences"])) + 26;
+            return "translate(" + x + "," + y + ")";
+        })
+        //how to automate this? Why put manual values
+        .style("fill", "#000000")
+
+    svg.append('g')
+        .selectAll("dot")
+        .data(AirData)
+        .enter()
+        .append("circle")
+        .attr("cy", function (d) { return yScale(d["Num_Occurrences"]); } )
+        .attr("cx", function (d) { return xScale(d["PM2_5_AQI_Value"]); } )
+        .attr("r", 2)
+        .attr("transform",  "translate(" + 50 + "," + 26 + ")")//"translate(" + -10 + "," + 30 + ")")
+        //how to automate this? Why put manual values
+        .style("fill", "#FFFFFF");
+
+    //shapes: AQI value (Square); Ozone AQI (Triangle); PM2.5 AQI (Circle)
+    
+    // Add x-axis
+    chart.append("g")
+        .attr("class", "x-axis")
+        .attr("transform", `translate(0,${chartHeight})`)
+        .call(d3.axisBottom(xScale))
+        .selectAll("text");
+
+    // Add y-axis
+    chart.append("g")
+        .attr("class", "y-axis")
+        .call(d3.axisLeft(yScale))
+        .selectAll("text");
+
+    // Add title
+    svg.append("text")
+        .attr("id", "chart-title")
+        .attr("x", width / 2)
+        .attr("y", 20)
+        .attr("text-anchor", "middle")
+        .style("font-size", "18px")
+        .style("fill", "black")
+        .text("Various AQI Values by No. of Occurrences of Country in Dataset");
+    
+    svg.append("text")
+        .attr("id", "y-axis-title")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -(height/2)+10)//width / 2)
+        .attr("y", 14)
+        .attr("text-anchor", "middle")
+        .style("font-size", "14px")
+        .style("fill", "black")
+        .text("No. of Occurrences of Country in Dataset");
+
+    svg.append("text")
+        .attr("id", "x-axis-title")
+        .attr("x", width / 2)
+        .attr("y", 385)
+        .attr("text-anchor", "middle")
+        .style("font-size", "14px")
+        .style("fill", "black")
+        .text("Average Value");
+
+    /*chart.select(".x-axis")
+        .call(d3.axisBottom(xScale));
+
+    chart.select(".y-axis")
+        .call(d3.axisLeft(yScale));*/
+
+    if (title.length > 0) {
+        svg.select("#chart-title")
+            .text(title);
+    }
 }
 
 
