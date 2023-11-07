@@ -5,7 +5,7 @@ setwd("/Users/Hridanshsaraogi/Desktop/Emory/Fall 2023/CS 441/Coding/WebDevelopme
 
 # Read the input file
 data <- read.csv("Hridansh_modified_global air pollution dataset.csv")
-continents <- read.csv("Countries-Continents.csv")
+continents <- read.csv("Countries-Continents.csv") #https://github.com/dbouquin/IS_608/blob/master/NanosatDB_munging/Countries-Continents.csv
 
 
 ###################################
@@ -87,3 +87,57 @@ colnames(data_graph2) <- c("Variable", "Value", "NumOccurrences")
 
 # Export the pivoted dataset to a CSV file
 write.csv(data_graph2, file = "graph2_pivoted_air_pollution_data.csv", row.names = FALSE)
+
+
+
+###################################
+##
+## Code for 3rd graph's data
+## Graph 3: Ozone and Pm2.5 Values by Continent
+###################################
+data_graph3 <- data
+
+data_graph3$Continent <- continents$Continent[match(data_graph3$Country, continents$Country)]
+
+data_graph3$Continent[which(data_graph3$Country == "Viet Nam")] <- continents$Continent[match("Vietnam", continents$Country)]
+data_graph3$Continent[which(data_graph3$Country == "Aruba")] <- "South America"
+data_graph3$Continent[which(data_graph3$Country == "Bolivia (Plurinational State of)")] <- continents$Continent[match("Bolivia", continents$Country)]
+data_graph3$Continent[which(data_graph3$Country == "Burkina Faso")] <- continents$Continent[match("Burkina", continents$Country)]
+data_graph3$Continent[which(data_graph3$Country == "Cabo Verde")] <- continents$Continent[match("Cape Verde", continents$Country)]
+data_graph3$Continent[which(data_graph3$Country == "Czechia")] <- continents$Continent[match("CZ", continents$Country)]
+data_graph3$Continent[which(data_graph3$Country == "Côte d'Ivoire")] <- continents$Continent[match("Ivory Coast", continents$Country)]
+data_graph3$Continent[which(data_graph3$Country == "Democratic Republic of the Congo")] <- continents$Continent[match("Congo", continents$Country)]
+data_graph3$Continent[which(data_graph3$Country == "Iran (Islamic Republic of)")] <- continents$Continent[match("Iran", continents$Country)]
+data_graph3$Continent[which(data_graph3$Country == "Kingdom of Eswatini")] <- "Africa"
+data_graph3$Continent[which(data_graph3$Country == "Lao People's Democratic Republic")] <- continents$Continent[match("Laos", continents$Country)]
+data_graph3$Continent[which(data_graph3$Country == "Myanmar")] <- continents$Continent[match("Burma (Myanmar)", continents$Country)]
+data_graph3$Continent[which(data_graph3$Country == "Republic of Korea")] <- continents$Continent[match("Korea, South", continents$Country)]
+data_graph3$Continent[which(data_graph3$Country == "Republic of Moldova")] <- continents$Continent[match("Moldova", continents$Country)]
+data_graph3$Continent[which(data_graph3$Country == "Republic of North Macedonia")] <- continents$Continent[match("Macedonia", continents$Country)]
+data_graph3$Continent[which(data_graph3$Country == "State of Palestine")] <- "Asia"
+data_graph3$Continent[which(data_graph3$Country == "Syrian Arab Republic")] <- continents$Continent[match("Syria", continents$Country)]
+data_graph3$Continent[which(data_graph3$Country == "United Kingdom of Great Britain and Northern Ireland")] <- continents$Continent[match("United Kingdom", continents$Country)]
+data_graph3$Continent[which(data_graph3$Country == "United Republic of Tanzania")] <- continents$Continent[match("Tanzania", continents$Country)]
+data_graph3$Continent[which(data_graph3$Country == "United States of America")] <- continents$Continent[match("US", continents$Country)]
+data_graph3$Continent[which(data_graph3$Country == "Venezuela (Bolivarian Republic of)")] <- continents$Continent[match("Venezuela", continents$Country)]
+
+
+data_graph3_unhealthy_only <- data_graph3 %>%
+  #group_by(Country, Continent) %>%
+  group_by(Continent) %>%
+  summarise(
+    AQI_Value = round(mean(AQI.Value), 2), #FOR ALL CATEGORIES
+    CO_AQI_Value = round(mean(CO.AQI.Value), 2),
+    Ozone_AQI_Value = round(mean(Ozone.AQI.Value), 2),
+    NO2_AQI_Value = round(mean(NO2.AQI.Value), 2),
+    PM2.5_AQI_Value = round(mean(PM2.5.AQI.Value), 2),
+    
+    AQI_Unhealthy = sum(AQI.Category %in% c('Unhealthy', 'Very Unhealthy'), na.rm = TRUE),
+    CO_Unhealthy = sum(CO.AQI.Category %in% c('Unhealthy', 'Very Unhealthy'), na.rm = TRUE), #CO.AQI.Category == 'Unhealthy'
+    PM2.5_Unhealthy = sum(PM2.5.AQI.Category %in% c('Unhealthy', 'Very Unhealthy'), na.rm = TRUE),
+    Ozone_Unhealthy = sum(Ozone.AQI.Category %in% c('Unhealthy', 'Very Unhealthy'), na.rm = TRUE),
+    NO2_Unhealthy = sum(NO2.AQI.Category %in% c('Unhealthy', 'Very Unhealthy'), na.rm = TRUE)
+  )
+
+print(data_graph3_unhealthy_only)
+write.csv(data_graph3_unhealthy_only, file = "graph3_continent_unhealthy_count.csv", row.names = FALSE)
