@@ -100,6 +100,23 @@ async function loadData() {
     await d3.csv("../../data/graph2_pivoted_air_pollution_data.csv").then(data => { //the original dataset was pivoted to generate this dataset. It is a summarized version where each row represents one country
         AggFreqData = data;
         //console.log(AggFreqData);
+
+        const variables = Array.from(new Set(AggFreqData.map(d => d.Variable)));//["AQI", "Ozone", "PM2.5", "NO2", "CO"];
+        const variablesDropdown = document.getElementById("variableDropdown");
+
+        // Populate the dropdown with options
+        variables.forEach((variable) => {
+        const option = document.createElement("option");
+        option.value = variable;
+        option.text = variable;
+        variableDropdown.appendChild(option);
+        });
+
+        // Event listener to handle selections
+        variableDropdown.addEventListener("change", function () {
+            const selectedVar = variableDropdown.value;
+            updateChart2(AggFreqData, selectedVar, "Aggregate Frequency of AQI Variable in Cities");
+        });
     });
 
     await d3.csv("../../data/graph3_continent_unhealthy_count.csv").then(data => { //the original dataset was pivoted to generate this dataset. It is a summarized version where each row represents one country
@@ -172,7 +189,7 @@ function drawAQIValuesGraph1() {
 }
 
 function drawAggFreqGraph2() {
-    updateChart2(AggFreqData, "Aggregate Frequency of AQI Values in Cities");
+    updateChart2(AggFreqData, "AQI.Value", "Aggregate Frequency of AQI Variable in Cities");
 }
 
 function continentAQIGraph3() {
@@ -443,33 +460,13 @@ function updateGraph1(selectedCountries) {
 }
 
 
-const variables = ["AQI", "Ozone", "PM2.5", "NO2", "CO"];
-
-const variablesDropdown = document.getElementById("variableDropdown");
-
-// Populate the dropdown with options
-variables.forEach((variable) => {
-  const option = document.createElement("option");
-  option.value = variable;
-  option.text = variable;
-  variableDropdown.appendChild(option);
-});
-
-// Event listener to handle selections
-variableDropdown.addEventListener("change", function () {
-    const selectedVar = variableDropdown.value;
-  updateGraph2(selectedVar);
-});
-
-function updateGraph2(selectedVar) {
-    //use selectedCountries array to filter your data and display the selected countries in the graph
-}
 
 
 
 
-
-function updateChart2(data, title = "") { //3 different columns shown on same graph
+function updateChart2(data, selectedVar="AQI.Value", title = "") { //3 different columns shown on same graph
+    const ogData = data;
+    data = data.filter(d => d.Variable === selectedVar);
     var xScale = d3.scaleLinear()
     .domain([0, d3.max(data, d => parseFloat(d.Value))])//findMax(d3.max(Graph1Data, d => d.Ozone_AQI_Value), d3.max(Graph1Data, d => d.AQI_Value), d3.max(Graph1Data, d => d.PM2_5_AQI_Value))])//[0,200])//[d3.min(Graph1Data, d => d.AQI_Value), d3.max(Graph1Data, d => d.Ozone_AQI_Value)])
     .range([0, width-80]);
@@ -479,6 +476,7 @@ function updateChart2(data, title = "") { //3 different columns shown on same gr
     .range([height-80, 0]);
 
     svg.selectAll(".data-point").remove();
+    svg.selectAll(".data-line").remove();
     svg.selectAll(".x-axis").remove();
     svg.selectAll(".y-axis").remove();
     svg.select("#x-axis-title").remove();
@@ -499,7 +497,8 @@ function updateChart2(data, title = "") { //3 different columns shown on same gr
         .attr("stroke", "#CC0000")
         .attr("stroke-width", 2)
         .attr("class", "data-line")
-        .attr("d", lineGenerator);
+        .attr("d", lineGenerator)
+        .attr("transform",  "translate(" + 52 + "," + 29 + ")");//+30 is perfect for the y value but it covers the x-axis hence keeping it slightly above
     
     // Add x-axis
     chart.append("g")
@@ -540,7 +539,8 @@ function updateChart2(data, title = "") { //3 different columns shown on same gr
         .attr("text-anchor", "middle")
         .style("font-size", "14px")
         .style("fill", "black")
-        .text("AQI Value");
+        .text(selectedVar);
+        //.text("AQI Value");
 
     /*chart.select(".x-axis")
         .call(d3.axisBottom(xScale));
