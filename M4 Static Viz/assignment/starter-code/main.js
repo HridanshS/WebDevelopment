@@ -14,7 +14,7 @@ let keyframes = [
     {
         activeVerse: 3,
         activeLines: [1, 2, 3, 4],
-        svgUpdate: drawAQIValuesGraph1
+        svgUpdate: continentAQIGraph3
     },
     {
         activeVerse: 4,
@@ -69,13 +69,15 @@ async function loadData() {
         const xMin = d3.min(Graph1Data, d => parseFloat(d.AQI_Value));
         const xMax = d3.max(Graph1Data, d => parseFloat(d.AQI_Value));
     
-        const slider = document.getElementById("xAxisSlider");
+        const xSlider = document.getElementById("xAxisSlider");
+        const xSliderValue = document.getElementById("xAxisSliderValue");
         //set the min and max values
-        slider.setAttribute("min", xMin);
-        slider.setAttribute("max", xMax);
+        xSlider.setAttribute("min", xMin);
+        xSlider.setAttribute("max", xMax);
+        xSlider.value = xMax;
+        xSliderValue.textContent = xMax;
 
-        //how to make dynamic based on data?
-        //this is not working: Array.from(new Set(Graph1Data.map(d => d.Country)));
+
         const countries = Array.from(new Set(Graph1Data.map(d => d.Country)));//["USA", "Canada", "UK", "Australia", "Germany", "France", "India"];
 
         const countryDropdown = document.getElementById("countryDropdown");
@@ -98,6 +100,11 @@ async function loadData() {
     await d3.csv("../../data/graph2_pivoted_air_pollution_data.csv").then(data => { //the original dataset was pivoted to generate this dataset. It is a summarized version where each row represents one country
         AggFreqData = data;
         //console.log(AggFreqData);
+    });
+
+    await d3.csv("../../data/graph3_continent_unhealthy_count.csv").then(data => { //the original dataset was pivoted to generate this dataset. It is a summarized version where each row represents one country
+        continentAQIData = data;
+        //console.log(continentAQIData);
     });
 }
 
@@ -168,97 +175,11 @@ function drawAggFreqGraph2() {
     updateChart2(AggFreqData, "Aggregate Frequency of AQI Values in Cities");
 }
 
+function continentAQIGraph3() {
+    updateChart3(continentAQIData, "Ozone and PM2.5 AQI Values by Continent");
+}
 
 
-/*function drawBarChart(data, title) {
-    svg.selectAll("*").remove();
-
-    // Define the margin so that there is space around the vis for axes and labels
-    const margin = { top: 30, right: 30, bottom: 50, left: 50 };
-    let chartWidth = width - margin.left - margin.right;
-    let chartHeight = height - margin.top - margin.bottom;
-
-    // Create a 'group' variable to hold the chart, these are used to keep similar items together in d3/with svgs
-    let chart = svg.append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    // Define an x scale which will assign a spot on the x axis to each of the unique values of colour in the dataset
-    let xScale = d3.scaleBand()
-        .domain(data.map(d => d.colour))
-        .range([0, chartWidth])
-        .padding(0.1);
-
-    let yScale = d3.scaleLinear()
-        .domain([0, d3.max(data, d => d.count)])
-        .nice()
-        .range([chartHeight, 0]);
-
-    // Create bars
-
-
-    // Add x-axis
-    chart.append("g")
-        .attr("class", "x-axis")
-        .attr("transform", "translate(0," + chartHeight + ")")
-        .call(d3.axisBottom(xScale))
-        .selectAll("text");
-
-    // Add y-axis
-    chart.append("g")
-        .attr("class", "y-axis")
-        .call(d3.axisLeft(yScale))
-        .selectAll("text");
-
-    // Add title
-    svg.append("text")
-        .attr("x", width / 2)
-        .attr("y", 20)
-        .attr("text-anchor", "middle")
-        .style("font-size", "18px")
-        .style("fill", "white")
-        .text(title);
-}*/
-
-
-
-
-/*function updateBarChart(data, title = "") {
-    xScale.domain(data.map(d => d.colour));
-    yScale.domain([0, d3.max(data, d => d.count)]).nice();
-
-    const bars = chart.selectAll(".bar")
-        .data(data, d => d.colour);
-
-    bars.exit()
-        .remove();
-
-    bars.attr("x", d => xScale(d.colour))
-        .attr("y", d => yScale(d.count))
-        .attr("height", d => chartHeight - yScale(d.count));
-
-    bars.enter().append("rect")
-        .attr("class", "bar")
-        .attr("x", d => xScale(d.colour))
-        .attr("y", chartHeight) // Set initial y position below the chart so we can't see it
-        .attr("width", xScale.bandwidth())
-        .attr("height", 0) // Set initial height to 0 so there is nothing to display
-        .attr("fill", "#FFDAB9") //Changed colour to Peachpuff from 999
-        .transition() // Declare we want to do a transition
-        .duration(1000) // This one is going to last for one second
-        .attr("y", d => yScale(d.count)) // Update the y value so that the bar is in the right location vertically
-        .attr("height", d => chartHeight - yScale(d.count)); // Update the height value
-
-    chart.select(".x-axis")
-        .call(d3.axisBottom(xScale));
-
-    chart.select(".y-axis")
-        .call(d3.axisLeft(yScale));
-
-    if (title.length > 0) {
-        svg.select("#chart-title")
-            .text(title);
-    }
-}*/
 
 function forwardClicked() {
     // Make sure we don't let the keyframeIndex go out of range
@@ -279,8 +200,6 @@ function backwardClicked() {
         keyframeIndex--;
         drawKeyframe(keyframeIndex);
       }
-
-     
     
 }
 
@@ -380,6 +299,9 @@ function updateChart1(data, title = "") { //3 different columns shown on same gr
     //     .data(data, d => d.colour);
 
     svg.selectAll(".data-line").remove();
+    svg.selectAll(".data-point").remove();
+    svg.selectAll(".x-axis").remove();
+    svg.selectAll(".y-axis").remove();
     svg.select("#x-axis-title").remove();
     svg.select("#y-axis-title").remove();
     svg.select("#chart-title").remove();
@@ -492,11 +414,12 @@ function updateChart1(data, title = "") { //3 different columns shown on same gr
 //Event listener to the slider input element
 //document.getElementById("xAxisSlider").addEventListener("input", updateChart1WithFilter);
 
-const xSlider = document.getElementById("xAxisSlider");
+//are the following lines redundant because it is done on line 72
+const xSlider = document.getElementById("xAxisSlider"); 
 const xSliderValue = document.getElementById("xAxisSliderValue");
-const label = document.querySelector("label[for='xAxisSlider']");
 
-// Set the initial label text
+//set the initial label text
+const label = document.querySelector("label[for='xAxisSlider']");
 label.textContent = "X-Axis Filter: ";
 
 xSlider.addEventListener("input", function() {
@@ -556,6 +479,8 @@ function updateChart2(data, title = "") { //3 different columns shown on same gr
     .range([height-80, 0]);
 
     svg.selectAll(".data-point").remove();
+    svg.selectAll(".x-axis").remove();
+    svg.selectAll(".y-axis").remove();
     svg.select("#x-axis-title").remove();
     svg.select("#y-axis-title").remove();
     svg.select("#chart-title").remove();
@@ -573,6 +498,7 @@ function updateChart2(data, title = "") { //3 different columns shown on same gr
         .attr("fill", "none")
         .attr("stroke", "#CC0000")
         .attr("stroke-width", 2)
+        .attr("class", "data-line")
         .attr("d", lineGenerator);
     
     // Add x-axis
@@ -627,6 +553,107 @@ function updateChart2(data, title = "") { //3 different columns shown on same gr
             .text(title);
     }
 }
+
+
+function updateChart3(data) {
+    console.log(data);
+    
+    const margin = { top: 50, right: 50, bottom: 50, left: 50 };
+    const width = 800 - margin.left - margin.right;
+    const height = 600 - margin.top - margin.bottom;
+
+    const svg = d3.select("#scatter-plot")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const xScale = d3.scaleLinear()
+        .domain([0, d3.max(data, d => parseFloat(d["PM2.5_AQI_Value"]))])
+        .range([0, width]);
+
+    const yScale = d3.scaleLinear()
+        .domain([0, d3.max(data, d => parseFloat(d["Ozone_AQI_Value"]))])
+        .range([height, 0]);
+
+    //color scale for continents
+    const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+    //size scale based on "PM2.5_Unhealthy" values
+    const sizeScale = d3.scaleSqrt()
+        .domain([0, d3.max(data, d => parseFloat(d["PM2.5_Unhealthy"]))])
+        .range([2, 10]);
+
+    //legend
+    const continents = Array.from(new Set(data.map(d => d["Continent"])));
+    const legend = svg.selectAll(".legend")
+        .data(continents)
+        .enter()
+        .append("g")
+        .attr("class", "legend")
+        .attr("transform", (d, i) => `translate(0,${i * 20})`);
+
+    legend.append("rect")
+        .attr("x", width - 18)
+        .attr("width", 18)
+        .attr("height", 18)
+        .style("fill", d => colorScale(d));
+
+    legend.append("text")
+        .attr("x", width - 24)
+        .attr("y", 9)
+        .attr("dy", ".35em")
+        .style("text-anchor", "end")
+        .text(d => d);
+
+
+    svg.selectAll(".data-line").remove();
+    svg.selectAll(".x-axis").remove();
+    svg.selectAll(".y-axis").remove();
+    svg.select("#x-axis-title").remove();
+    svg.select("#y-axis-title").remove();
+    svg.select("#chart-title").remove();
+
+    //circles for each data point
+    svg.selectAll(".dot")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("class", "dot")
+        .attr("cx", d => xScale(parseFloat(d["PM2.5_AQI_Value"])))
+        .attr("cy", d => yScale(parseFloat(d["Ozone_AQI_Value"])))
+        .attr("r", d => sizeScale(parseFloat(d["PM2.5_Unhealthy"])))
+        .style("fill", d => colorScale(d["Continent"]));
+
+    // Add x-axis
+    svg.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(xScale));
+
+    // Add y-axis
+    svg.append("g")
+        .call(d3.axisLeft(yScale));
+
+    // Add labels
+    svg.append("text")
+        .attr("text-anchor", "end")
+        .attr("x", width / 2)
+        .attr("y", height + 40)
+        .text("Avg. PM2.5 AQI Value");
+
+    svg.append("text")
+        .attr("text-anchor", "end")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -height / 2)
+        .attr("y", -40)
+        .text("Avg. Ozone AQI Value");
+}
+
+
+
+
+
+
 
 async function initialise() {
 // Now that we are calling an asynchronous function in our initialise function this function also now becomes async

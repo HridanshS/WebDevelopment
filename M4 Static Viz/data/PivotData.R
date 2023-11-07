@@ -15,6 +15,7 @@ data$Country[which(data$Country == "Iran (Islamic Republic of)")] <- "Iran"
 data$Country[which(data$Country == "Lao People's Democratic Republic")] <- "Laos"
 data$Country[which(data$Country == "Democratic Republic of the Congo")] <- "Dem. Rep. Congo"
 data$Country[which(data$Country == "Republic of North Macedonia")] <- "Rep. of N. Macedonia"
+data$Country[which(data$Country == "United Republic of Tanzania")] <- "Rep. of Tanzania"
 
 
 
@@ -59,7 +60,7 @@ data_pivoted$Continent[which(data_pivoted$Country == "Republic of Moldova")] <- 
 data_pivoted$Continent[which(data_pivoted$Country == "Rep. of N. Macedonia")] <- continents$Continent[match("Macedonia", continents$Country)]
 data_pivoted$Continent[which(data_pivoted$Country == "State of Palestine")] <- "Asia"
 data_pivoted$Continent[which(data_pivoted$Country == "Syrian Arab Republic")] <- continents$Continent[match("Syria", continents$Country)]
-data_pivoted$Continent[which(data_pivoted$Country == "United Republic of Tanzania")] <- continents$Continent[match("Tanzania", continents$Country)]
+data_pivoted$Continent[which(data_pivoted$Country == "Rep. of Tanzania")] <- continents$Continent[match("Tanzania", continents$Country)]
 data_pivoted$Continent[which(data_pivoted$Country == "United States of America")] <- continents$Continent[match("US", continents$Country)]
 
 
@@ -129,7 +130,7 @@ data_graph3$Continent[which(data_graph3$Country == "Republic of Moldova")] <- co
 data_graph3$Continent[which(data_graph3$Country == "Rep. of N. Macedonia")] <- continents$Continent[match("Macedonia", continents$Country)]
 data_graph3$Continent[which(data_graph3$Country == "State of Palestine")] <- "Asia"
 data_graph3$Continent[which(data_graph3$Country == "Syrian Arab Republic")] <- continents$Continent[match("Syria", continents$Country)]
-data_graph3$Continent[which(data_graph3$Country == "United Republic of Tanzania")] <- continents$Continent[match("Tanzania", continents$Country)]
+data_graph3$Continent[which(data_graph3$Country == "Rep. of Tanzania")] <- continents$Continent[match("Tanzania", continents$Country)]
 data_graph3$Continent[which(data_graph3$Country == "United States of America")] <- continents$Continent[match("US", continents$Country)]
 
 
