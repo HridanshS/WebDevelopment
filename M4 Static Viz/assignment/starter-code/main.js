@@ -62,8 +62,19 @@ async function loadData() {
         //console.log(Graph1Data);
         //console.log(typeof(Graph1Data[0].Num_Occurrences));
         //console.log(typeof(parseInt(Graph1Data[0].Num_Occurrences)));
-    });
 
+
+        //min and max values based on data
+        //console.log(d3.min(Graph1Data, d => parseFloat(d.AQI_Value)));
+        const xMin = d3.min(Graph1Data, d => parseFloat(d.AQI_Value));
+        const xMax = d3.max(Graph1Data, d => parseFloat(d.AQI_Value));
+    
+        const slider = document.getElementById("xAxisSlider");
+        //set the min and max values
+        slider.setAttribute("min", xMin);
+        slider.setAttribute("max", xMax);
+    
+    });
     await d3.csv("../../data/graph2_pivoted_air_pollution_data.csv").then(data => { //the original dataset was pivoted to generate this dataset. It is a summarized version where each row represents one country
         AggFreqData = data;
         //console.log(AggFreqData);
@@ -348,7 +359,6 @@ function updateChart1(data, title = "") { //3 different columns shown on same gr
     // const bars = chart.selectAll(".bar")
     //     .data(data, d => d.colour);
 
-    //NEED TO REMOVE ALL THE DATA THAT IS CURRENTLY ON THE GRAPH
     svg.selectAll(".data-line").remove();
     svg.select("#x-axis-title").remove();
     svg.select("#y-axis-title").remove();
@@ -458,6 +468,63 @@ function updateChart1(data, title = "") { //3 different columns shown on same gr
 }
 
 
+
+//Event listener to the slider input element
+//document.getElementById("xAxisSlider").addEventListener("input", updateChart1WithFilter);
+
+const xSlider = document.getElementById("xAxisSlider");
+const xSliderValue = document.getElementById("xAxisSliderValue");
+const label = document.querySelector("label[for='xAxisSlider']");
+
+// Set the initial label text
+label.textContent = "X-Axis Filter: ";
+
+xSlider.addEventListener("input", function() {
+  // Update the value in the span
+  xSliderValue.textContent = xSlider.value;
+  updateChart1WithFilter();
+});
+
+function updateChart1WithFilter() { //function to update the chart with the selected range
+    //console.log(document.getElementById("xAxisSlider").value);
+    const selectedRange = parseInt(document.getElementById("xAxisSlider").value); //Get the selected range from the slider
+    const filteredData = Graph1Data.filter(d => parseFloat(d.AQI_Value) <= selectedRange); //Filter the data based on the selected range
+
+    xScale.domain([0, selectedRange]); //update the xScale and redraw the chart
+    updateChart1(filteredData, "Various AQI Values by No. of Occurrences of Country in Dataset");
+}
+
+//how to make dynamic based on data?
+//this is not working: Array.from(new Set(Graph1Data.map(d => d.Country)));
+const countries = ["USA", "Canada", "UK", "Australia", "Germany", "France", "India"];
+
+const countryDropdown = document.getElementById("countryDropdown");
+
+// Populate the dropdown with options
+countries.forEach((country) => {
+  const option = document.createElement("option");
+  option.value = country;
+  option.text = country;
+  countryDropdown.appendChild(option);
+});
+
+// Event listener to handle selections
+countryDropdown.addEventListener("change", function () {
+  const selectedCountries = Array.from(countryDropdown.selectedOptions).map(option => option.value);
+  updateGraph(selectedCountries);
+});
+
+// EDIT
+function updateGraph(selectedCountries) {
+  //use selectedCountries array to filter your data and display the selected countries in the graph
+}
+
+
+
+
+
+
+
 function updateChart2(data, title = "") { //3 different columns shown on same graph
     var xScale = d3.scaleLinear()
     .domain([0, d3.max(AggFreqData, d => parseFloat(d.AQI_Value))])//findMax(d3.max(Graph1Data, d => d.Ozone_AQI_Value), d3.max(Graph1Data, d => d.AQI_Value), d3.max(Graph1Data, d => d.PM2_5_AQI_Value))])//[0,200])//[d3.min(Graph1Data, d => d.AQI_Value), d3.max(Graph1Data, d => d.Ozone_AQI_Value)])
@@ -467,8 +534,6 @@ function updateChart2(data, title = "") { //3 different columns shown on same gr
     .domain([0, d3.max(AggFreqData, d => parseInt(d.Num_Occurrences))]) //2872 is Num_Occurrences for USA //2872])
     .range([height-80, 0]);
 
-    //NEED TO REMOVE ALL THE DATA THAT IS CURRENTLY ON THE GRAPH
-    //svg.selectAll("*").remove();
     svg.selectAll(".data-point").remove();
     svg.select("#x-axis-title").remove();
     svg.select("#y-axis-title").remove();
@@ -478,6 +543,8 @@ function updateChart2(data, title = "") { //3 different columns shown on same gr
     var lineGenerator = d3.line()
         .x(function (d) { return xScale(parseFloat(d.AQI_Value)); })
         .y(function (d) { return yScale(parseInt(d.Num_Occurrences)); });
+
+    
 
     // Create the line graph
     svg.append("path")
