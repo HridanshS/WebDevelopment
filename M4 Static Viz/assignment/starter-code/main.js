@@ -115,7 +115,7 @@ async function loadData() {
         // Event listener to handle selections
         variableDropdown.addEventListener("change", function () {
             const selectedVar = variableDropdown.value;
-            updateChart2(AggFreqData, selectedVar, "Aggregate Frequency of AQI Variable in Cities");
+            updateChart2(AggFreqData, selectedVar, "Aggregate Frequency of Selected AQI Variable in Cities");
         });
     });
 
@@ -189,7 +189,7 @@ function drawAQIValuesGraph1() {
 }
 
 function drawAggFreqGraph2() {
-    updateChart2(AggFreqData, "AQI.Value", "Aggregate Frequency of AQI Variable in Cities");
+    updateChart2(AggFreqData, "AQI.Value", "Aggregate Frequency of Selected AQI Variable in Cities");
 }
 
 function continentAQIGraph3() {
@@ -488,8 +488,6 @@ function updateChart2(data, selectedVar="AQI.Value", title = "") { //3 different
         .x(function (d) { return xScale(parseFloat(d.Value)); })
         .y(function (d) { return yScale(parseInt(d.NumOccurrences)); });
 
-    
-
     // Create the line graph
     svg.append("path")
         .datum(data)
@@ -552,8 +550,45 @@ function updateChart2(data, selectedVar="AQI.Value", title = "") { //3 different
         svg.select("#chart-title")
             .text(title);
     }
+
+    const tooltip = d3.select("#line-tooltip");
+
+    svg.selectAll(".data-line")
+    .on("mouseover", (event) => {
+        // Calculate the x-value based on the cursor's position
+        const xValue = xScale.invert(event.offsetX);
+
+        // Find the closest data point based on the x-value
+        const closestDataPoint = findClosestDataPoint(data, xValue);
+
+        // Show the tooltip and position it next to the cursor
+        tooltip.style("display", "block")
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 20) + "px")
+            .html(`${closestDataPoint.Variable}: ${closestDataPoint.Value}<br>Occurrence Frequency: ${closestDataPoint.NumOccurrences}`);
+    })
+    .on("mouseout", () => {
+        // Hide the tooltip on mouseout
+        tooltip.style("display", "none");
+    });
 }
 
+// Function to find the closest data point based on x-value
+function findClosestDataPoint(data, xValue) {
+    //console.log(xValue); //xValue of first point of the line is exactly how much it is off by
+    let closestPoint = data[0];
+    let closestDistance = Math.abs(xValue - closestPoint.Value);
+
+    for (let i = 1; i < data.length; i++) {
+        const distance = Math.abs(xValue - data[i].Value);
+        if (distance < closestDistance) {
+            closestPoint = data[i];
+            closestDistance = distance;
+        }
+    }
+
+    return closestPoint;
+}
 
 function updateChart3(data) {
     console.log(data);
