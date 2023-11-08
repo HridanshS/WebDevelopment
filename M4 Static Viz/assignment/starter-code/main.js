@@ -292,6 +292,9 @@ function scrollLeftColumnToActiveVerse(id) {
     })
 }
 
+
+
+
 function updateChart1(data, title = "") { //3 different columns shown on same graph
     //xScale.domain(data.map(d => d.colour));
     //yScale.domain([0, d3.max(data, d => d.count)]).nice();
@@ -309,6 +312,9 @@ function updateChart1(data, title = "") { //3 different columns shown on same gr
         Ozone_AQI_Value: d3.symbolTriangle,
         PM2_5_AQI_Value: d3.symbolCircle
     };
+    // Store the selected country
+    let selectedCountry = null;
+
 
 
 
@@ -420,11 +426,47 @@ function updateChart1(data, title = "") { //3 different columns shown on same gr
     chart.select(".y-axis")
         .call(d3.axisLeft(yScale));*/
 
+    
+    // Handle click on a data point
+    svg.selectAll(".data-point")
+        .on("click", (event, d) => {
+            //console.log("hello");
+            const clickedCountry = d.Country;
+            //console.log(selectedCountry);
+
+            // If it's the same country as the previous click, clear the selection
+            if (clickedCountry === selectedCountry) {
+                selectedCountry = null;
+                svg.selectAll(".data-point").style("opacity", 0.6);
+            } else {
+                selectedCountry = clickedCountry;
+                svg.selectAll(".data-point")
+                    .style("opacity", (d) => (d.Country === selectedCountry) ? 1 : 0.1);
+            }
+
+            // // Update point opacity based on the selected country
+            // svg.selectAll(".data-point")
+            //     .style("opacity", (d) => (selectedCountry && d.Country === selectedCountry) ? 1 : 0.3);
+
+            // You can also add code to draw a line connecting the selected points here
+        });
+
+    // Modify the opacity for initial rendering
+    svg.selectAll(".data-point")
+        .style("opacity", 0.6); // Initial opacity
+
+    
+    if (selectedCountry) {
+        data = data.filter(d => d.Country === selectedCountry);
+    }
+
     if (title.length > 0) {
         svg.select("#chart-title")
             .text(title);
     }
 }
+
+
 
 
 
@@ -488,6 +530,14 @@ function updateChart2(data, selectedVar="AQI.Value", title = "") { //3 different
         .x(function (d) { return xScale(parseFloat(d.Value)); })
         .y(function (d) { return yScale(parseInt(d.NumOccurrences)); });
 
+
+    var dictionary = {
+        "AQI.Value": "Overall Air Quality Index Value",
+        "CO.AQI.Value": "Carbon Monoxide Air Quality Index Value",
+        "NO2.AQI.Value": "Nitrogen Dioxide  Air Quality Index Value",
+        "Ozone.AQI.Value": "Ozone Air Quality Index Value",
+        "PM2.5.AQI.Value": "PM2.5 particles  Air Quality Index Value"
+    };
     // Create the line graph
     svg.append("path")
         .datum(data)
@@ -537,7 +587,7 @@ function updateChart2(data, selectedVar="AQI.Value", title = "") { //3 different
         .attr("text-anchor", "middle")
         .style("font-size", "14px")
         .style("fill", "black")
-        .text(selectedVar);
+        .text(dictionary[selectedVar]);
         //.text("AQI Value");
 
     /*chart.select(".x-axis")
@@ -572,6 +622,8 @@ function updateChart2(data, selectedVar="AQI.Value", title = "") { //3 different
         tooltip.style("display", "none");
     });
 }
+
+
 
 // Function to find the closest data point based on x-value
 function findClosestDataPoint(data, xValue) {
